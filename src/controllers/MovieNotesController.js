@@ -42,12 +42,22 @@ class MovieNotesController {
     const { id } = request.params;
 
     const noteMovie = await knex("movie_notes").where({ id }).first();
-    const tagMovie = await knex("movie_tags").where({ movie_id:id }).orderBy("name");
+    const tagMovie = await knex("movie_tags")
+      .where({ movie_id: id })
+      .orderBy("name");
 
     return response.json({
       ...noteMovie,
-      tagMovie
+      tagMovie,
     });
+  }
+
+  async deleteMovieNotes(request, response) {
+    const { id } = request.params;
+
+    await knex("movie_notes").where({ id }).delete();
+
+    return response.json();
   }
 }
 
