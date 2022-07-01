@@ -3,7 +3,7 @@ const knex = require("../database/knex");
 
 class MovieNotesController {
   async createMovieNotes(request, response) {
-    const { title, description,rating, tags} = request.body;
+    const { title, description, rating, tags } = request.body;
     const { user_id } = request.params;
 
     if (!title) {
@@ -25,7 +25,7 @@ class MovieNotesController {
       user_id,
     });
 
-  const tagsInsert = tags.map((name) => {
+    const tagsInsert = tags.map((name) => {
       return {
         movie_id,
         name,
@@ -36,6 +36,18 @@ class MovieNotesController {
     await knex("movie_tags").insert(tagsInsert);
 
     response.json();
+  }
+
+  async showMovieNotes(request, response) {
+    const { id } = request.params;
+
+    const noteMovie = await knex("movie_notes").where({ id }).first();
+    const tagMovie = await knex("movie_tags").where({ movie_id:id }).orderBy("name");
+
+    return response.json({
+      ...noteMovie,
+      tagMovie
+    });
   }
 }
 
