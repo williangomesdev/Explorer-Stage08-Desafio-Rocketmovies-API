@@ -1,7 +1,8 @@
 const AppError = require("../utils/AppError");
+const knex = require("../database/knex");
 
 class UsersController {
-  createUser(request, response) {
+  async createUser(request, response) {
     const { name, email, password, avatar } = request.body;
 
     if (!name) {
@@ -14,12 +15,13 @@ class UsersController {
       throw new AppError("Senha é obrigatória!");
     }
 
-    response.status(201).json({
+    const newUser = await knex("users").insert({
       name,
       email,
       password,
-      avatar,
     });
+
+    response.json();
   }
 }
 
