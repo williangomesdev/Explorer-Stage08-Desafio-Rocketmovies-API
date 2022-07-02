@@ -15,7 +15,7 @@ class UsersController {
       throw new AppError("Senha é obrigatória!");
     }
 
-    const newUser = await knex("users").insert({
+    await knex("users").insert({
       name,
       email,
       password,
