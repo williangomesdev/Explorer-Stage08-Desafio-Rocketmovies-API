@@ -21,7 +21,19 @@ class UsersController {
     await knex("users").insert({
       name,
       email,
-      password:hashedPassword,
+      password: hashedPassword,
+    });
+
+    response.json();
+  }
+
+  async updateUser(request, response) {
+    const { name, email } = request.body;
+    const { id } = request.params;
+
+    await knex("users").where({ id }).update({
+      name,
+      email,
     });
 
     response.json();
