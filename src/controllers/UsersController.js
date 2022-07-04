@@ -1,7 +1,7 @@
 const { hash } = require("bcryptjs");
 const AppError = require("../utils/AppError");
 const knex = require("../database/knex");
-
+let hashedPassword;
 class UsersController {
   async createUser(request, response) {
     const { name, email, password, avatar } = request.body;
@@ -16,7 +16,7 @@ class UsersController {
       throw new AppError("Senha é obrigatória!");
     }
 
-    const hashedPassword = await hash(password, 8);
+    hashedPassword = await hash(password, 8);
 
     await knex("users").insert({
       name,
@@ -28,12 +28,15 @@ class UsersController {
   }
 
   async updateUser(request, response) {
-    const { name, email } = request.body;
+    const { name, email, password } = request.body;
     const { id } = request.params;
+
+    hashedPassword = await hash(password, 8);
 
     await knex("users").where({ id }).update({
       name,
       email,
+      password: hashedPassword,
     });
 
     response.json();
