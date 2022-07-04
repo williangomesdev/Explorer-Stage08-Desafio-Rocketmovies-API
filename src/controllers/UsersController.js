@@ -31,6 +31,23 @@ class UsersController {
     const { name, email, password } = request.body;
     const { id } = request.params;
 
+    const searchName = await knex("users").select("name")
+    const nameAlreadyExists = searchName.filter(el => el.name == name).length;
+    const searchEmail = await knex("users").select("email");
+    const emailAlreadyExists  = searchEmail.filter(el => el.email == email).length;
+    const userIdExists = await knex("users").select("id").where("id", [id]);
+
+
+    if(userIdExists.length === 0) {
+      throw new AppError("Usuário não encontrado");
+    }
+    if (emailAlreadyExists > 0) {
+      throw new AppError("E-mail ja está em uso. favor adicionar outro endereço de e-mail ");
+    }
+    if(nameAlreadyExists > 0){
+      throw new AppError("Nome de usuário ja está em uso por outro perfil, favor adicionar outro nome ");
+    }
+
     hashedPassword = await hash(password, 8);
 
     await knex("users").where({ id }).update({
@@ -38,7 +55,6 @@ class UsersController {
       email,
       password: hashedPassword,
     });
-
     response.json();
   }
 }
