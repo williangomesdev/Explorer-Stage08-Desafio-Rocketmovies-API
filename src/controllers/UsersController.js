@@ -1,6 +1,7 @@
-const { hash } = require("bcryptjs");
+const { hash, compare } = require("bcryptjs");
 const AppError = require("../utils/AppError");
 const knex = require("../database/knex");
+const sqliteConnection = require("../database/sqlite");
 let hashedPassword;
 class UsersController {
   async createUser(request, response) {
@@ -28,32 +29,46 @@ class UsersController {
   }
 
   async updateUser(request, response) {
-    const { name, email, password } = request.body;
+    const { name, email, password, old_password } = request.body;
     const { id } = request.params;
 
-    const searchName = await knex("users").select("name")
-    const nameAlreadyExists = searchName.filter(el => el.name == name).length;
+    const database = await sqliteConnection();
+    const user = await database.get("SELECT * FROM users WHERE id = (?)", [id]);
+    console.log(user.password);
+    const searchName = await knex("users").select("name");
     const searchEmail = await knex("users").select("email");
-    const emailAlreadyExists  = searchEmail.filter(el => el.email == email).length;
     const userIdExists = await knex("users").select("id").where("id", [id]);
+    const emailAlreadyExists = searchEmail.filter(
+      (el) => el.email == email
+    ).length;
+    const nameAlreadyExists = searchName.filter((el) => el.name == name).length;
 
-
-    if(userIdExists.length === 0) {
+    if (userIdExists.length === 0) {
       throw new AppError("Usuário não encontrado");
-    }
-    if (emailAlreadyExists > 0) {
-      throw new AppError("E-mail ja está em uso. favor adicionar outro endereço de e-mail ");
-    }
-    if(nameAlreadyExists > 0){
-      throw new AppError("Nome de usuário ja está em uso por outro perfil, favor adicionar outro nome ");
+    } else if (emailAlreadyExists > 0) {
+      throw new AppError(
+        "E-mail ja está em uso. favor adicionar outro endereço de e-mail "
+      );
+    } else if (nameAlreadyExists > 0) {
+      throw new AppError(
+        "Nome de usuário ja está em uso por outro perfil, favor adicionar outro nome "
+      );
     }
 
-    hashedPassword = await hash(password, 8);
+    if (password && old_password) {
+      const checkOldPassword = await compare(old_password, user.password);
+
+      if (!checkOldPassword) {
+        throw new AppError("Senha antiga incorreta");
+      }
+
+      user.password = await hash(password, 8);
+    }
 
     await knex("users").where({ id }).update({
       name,
       email,
-      password: hashedPassword,
+      password: user.password,
     });
     response.json();
   }
