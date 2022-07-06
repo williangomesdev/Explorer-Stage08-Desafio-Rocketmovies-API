@@ -34,7 +34,6 @@ class UsersController {
 
     const database = await sqliteConnection();
     const user = await database.get("SELECT * FROM users WHERE id = (?)", [id]);
-    console.log(user.password);
     const searchName = await knex("users").select("name");
     const searchEmail = await knex("users").select("email");
     const userIdExists = await knex("users").select("id").where("id", [id]);
@@ -54,6 +53,9 @@ class UsersController {
         "Nome de usuário ja está em uso por outro perfil, favor adicionar outro nome "
       );
     }
+
+    user.name = name ?? user.name;
+    user.email = email ?? user.email;
 
     if (password && old_password) {
       const checkOldPassword = await compare(old_password, user.password);
